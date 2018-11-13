@@ -1,5 +1,6 @@
 from django.apps import AppConfig
 
 
-class PayuConfig(AppConfig):
-    name = 'payu'
+class PayULatamConfig(AppConfig):
+    name = 'payulatam'
+    verbose_name = "Django Payu Latam application"
