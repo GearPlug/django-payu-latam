@@ -2,12 +2,46 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from payu.signals import valid_notification_received, invalid_notification_received
+from payulatam.signals import valid_notification_received, invalid_notification_received
+
+
+
+class AbstractTransactionNotification(models.Model):
+    """
+
+    """
+    transaction_id = models.CharField(max_length=36, db_index=True)
+    transaction_date = models.DateTimeField()
+
+    # TODO: Revisar si es de bank o transaction
+    transaction_bank_id = models.CharField(max_length=255)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return self.transaction_id
+
+
+class AbstractBillingNotification(models.Model):
+    billing_address = models.TextField()
+    billing_city = models.CharField(max_length=255)
+    billing_country = models.CharField(max_length=2)  # TODO: choices
+
+    class Meta:
+        abstract = True
+
+
+class AbstractShippingNotification(models.Model):
+    shipping_address = models.CharField(max_length=50)
+    shipping_city = models.CharField(max_length=50)
+    shipping_country = models.CharField(max_length=2)  # TODO: choices
+
+    class Meta:
+        abstract = True
 
 
 class PaymentNotification(models.Model):
-    transaction_id = models.CharField(max_length=36)
-    transaction_date = models.DateTimeField()
     reference_sale = models.CharField(max_length=255)
     description = models.CharField(max_length=255)
 
@@ -39,14 +73,6 @@ class PaymentNotification(models.Model):
     commision_pol = models.DecimalField(max_digits=64, decimal_places=2, default=0)
     commision_pol_currency = models.CharField(max_length=3)
 
-    billing_address = models.CharField(max_length=255)
-    billing_city = models.CharField(max_length=255)
-    billing_country = models.CharField(max_length=2)
-
-    shipping_address = models.CharField(max_length=50)
-    shipping_city = models.CharField(max_length=50)
-    shipping_country = models.CharField(max_length=2)
-
     email_buyer = models.CharField(max_length=255)
     phone = models.CharField(max_length=20)
     office_phone = models.CharField(max_length=20)
@@ -59,7 +85,7 @@ class PaymentNotification(models.Model):
 
     bank_id = models.CharField(max_length=255)
     bank_referenced_name = models.CharField(max_length=100)
-    transaction_bank_id = models.CharField(max_length=255)
+    # transaction_bank_id = models.CharField(max_length=255)
     error_code_bank = models.CharField(max_length=255)
     error_message_bank = models.CharField(max_length=255)
 
