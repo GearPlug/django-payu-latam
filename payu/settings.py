@@ -34,7 +34,7 @@ class PayULatamSettings(object):
     def __init__(self, user_settings=None, defaults=None, mandatory=None):
         self.user_settings = user_settings or {}
         self.defaults = defaults or {}
-        self.mandatory= mandatory or {}
+        self.mandatory = mandatory or {}
 
     def __getattr__(self, attr):
         if attr not in self.defaults.keys():
@@ -56,5 +56,6 @@ class PayULatamSettings(object):
     def validate_setting(self, attr, val):
         if not val and attr in self.mandatory:
             raise AttributeError("PayU Latam setting: %r is mandatory" % (attr))
+
 
 payulatam_settings = PayULatamSettings(USER_SETTINGS, DEFAULTS, MANDATORY)
