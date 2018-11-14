@@ -3,7 +3,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
-from payu.forms import PaymentNotificationForm
+from payulatam.forms import PaymentNotificationForm
 
 
 @method_decorator(csrf_exempt, name='dispatch')

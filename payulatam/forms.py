@@ -1,9 +1,9 @@
 from django import forms
 from django.conf import settings
 
-from payu.fields import PayuDateTimeField
-from payu.models import PaymentNotification
-from payu.utils import get_signature
+from payulatam.fields import PayuDateTimeField
+from payulatam.models import PaymentNotification
+from payulatam.utils import get_signature
 
 
 class PaymentNotificationForm(forms.ModelForm):
