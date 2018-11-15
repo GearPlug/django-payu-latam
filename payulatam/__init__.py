@@ -1,1 +1,1 @@
-default_app_config = "payu.apps.PayULatamConfig"
+default_app_config = "payulatam.apps.PayULatamConfig"
