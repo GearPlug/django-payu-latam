@@ -16,6 +16,7 @@ setup(name='django-payu-latam',
       url='https://github.com/GearPlug/django-payu-latam',
       author='GearPlug',
       author_email='support@gearplug.io',
+      packages=['payulatam'],
       install_requires=[
           'django',
           'payu-python',
