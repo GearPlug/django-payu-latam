@@ -1,9 +1,10 @@
+from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from payu.enumerators import Country, Currency
-
 from payulatam.signals import valid_notification_received, invalid_notification_received
+from payulatam.utils import get_signature
 
 COUNTRY = tuple(map(lambda x: (x.value, x.name), Country))
 CURRENCY = tuple(map(lambda x: (x.value, x.name), Currency))
@@ -133,7 +134,8 @@ class AbstractFlagSegment(models.Model):
         return self.flag
 
     def save(self, *args, **kwargs):
-        if not self.id and PaymentNotification.objects.filter(transaction_id=self.transaction_id).exists():
+        exists = PaymentNotification.objects.filter(transaction_id=self.transaction_id).exists()
+        if not self.id and exists:
             self.flag = True
         super().save(*args, **kwargs)
 
@@ -201,6 +203,24 @@ class PaymentNotification(AbstractPaymentNotification):
 
     class Meta:
         db_table = 'payu_payment_notification'
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            # Si el segundo decimal del parámetro value es cero, ejemplo: 150.00
+            # El nuevo valor new_value para generar la firma debe ir con sólo un decimal así: 150.0.
+            # Si el segundo decimal del parámetro value es diferente a cero, ejemplo: 150.26
+            # El nuevo valor new_value para generar la firma debe ir con los dos decimales así: 150.26.
+            value = None
+            first_decimal = str(self.value).split('.')[-1][0]
+            if first_decimal == '0':
+                value = '{}.0'.format(str(self.value).split('.')[0])
+
+            sign = get_signature(settings.PAYU_API_KEY, self.merchant_id, self.reference_sale, value, self.currency,
+                                 self.state_pol)
+
+            if self.sign != sign:
+                self.flag = True
+        super().save(*args, **kwargs)
 
 
 @receiver(post_save, sender=PaymentNotification)

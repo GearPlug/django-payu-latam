@@ -4,11 +4,12 @@
     The 'settings.py' file might look like this:
 
     PAYU_LATAM = {
-        'API_KEY': '4Vj8eK4rloUd272L48hsrarnUA',
-        'MERCHAN_ID':{
-            'COLOMBIA':'3437',
-            'ARGENTINA':'7309',
-        },
+        'API_LOGIN': 'pRRXKOl8ikMmt9u',
+        'API_KEY':  '4Vj8eK4rloUd272L48hsrarnUA',
+        'MERCHANT_ID': 508029,
+        'ACCOUNT_ID_DICT': {
+            'CO': 512321
+        }
     }
 """
 from django.conf import settings
@@ -17,12 +18,18 @@ USER_SETTINGS = getattr(settings, "PAYU_LATAM", None)
 
 # List of settings that have a default when a value is not provided by the user.
 DEFAULTS = {
-    'API_KEY': None,  # PayU Latam test API key: '4Vj8eK4rloUd272L48hsrarnUA'.
+    'API_LOGIN': None,
+    'API_KEY': None,
+    'MERCHANT_ID': None,
+    'ACCOUNT_ID_DICT': None,
 }
 
 # List of settings that cannot be empty
 MANDATORY = (
+    'API_LOGIN',
     'API_KEY',
+    'MERCHANT_ID',
+    'ACCOUNT_ID_DICT',
 )
 
 

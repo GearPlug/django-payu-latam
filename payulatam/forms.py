@@ -1,9 +1,7 @@
 from django import forms
-from django.conf import settings
 
 from payulatam.fields import PayuDateTimeField
 from payulatam.models import PaymentNotification
-from payulatam.utils import get_signature
 
 
 class PaymentNotificationForm(forms.ModelForm):
@@ -37,26 +35,3 @@ class PaymentNotificationForm(forms.ModelForm):
     class Meta:
         model = PaymentNotification
         fields = '__all__'
-
-    def clean(self):
-        cleaned_data = super().clean()
-        sign = cleaned_data.get('sign')
-        merchant_id = cleaned_data.get('merchant_id')
-        reference_sale = cleaned_data.get('reference_sale')
-
-        # Si el segundo decimal del parámetro value es cero, ejemplo: 150.00
-        # El nuevo valor new_value para generar la firma debe ir con sólo un decimal así: 150.0.
-        # Si el segundo decimal del parámetro value es diferente a cero, ejemplo: 150.26
-        # El nuevo valor new_value para generar la firma debe ir con los dos decimales así: 150.26.
-        value = cleaned_data.get('value')
-        first_decimal = str(value).split('.')[-1][0]
-        if first_decimal == '0':
-            value = '{}.0'.format(str(value).split('.')[0])
-
-        currency = cleaned_data.get('currency')
-        state_pol = cleaned_data.get('state_pol')
-
-        generated_sign = get_signature(settings.PAYU_API_KEY, merchant_id, reference_sale, value, currency, state_pol)
-
-        if sign != generated_sign:
-            raise forms.ValidationError('Invalid payment notification sign.')
