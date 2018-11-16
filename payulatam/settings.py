@@ -21,7 +21,7 @@ DEFAULTS = {
     'API_LOGIN': None,
     'API_KEY': None,
     'MERCHANT_ID': None,
-    'ACCOUNT_ID_DICT': None,
+    'ACCOUNT_ID': None,
 }
 
 # List of settings that cannot be empty
@@ -29,7 +29,7 @@ MANDATORY = (
     'API_LOGIN',
     'API_KEY',
     'MERCHANT_ID',
-    'ACCOUNT_ID_DICT',
+    'ACCOUNT_ID',
 )
 
 

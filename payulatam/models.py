@@ -1,4 +1,4 @@
-from django.conf import settings
+from payulatam.settings import payulatam_settings as settings
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -215,7 +215,7 @@ class PaymentNotification(AbstractPaymentNotification):
             if first_decimal == '0':
                 value = '{}.0'.format(str(self.value).split('.')[0])
 
-            sign = get_signature(settings.PAYU_API_KEY, self.merchant_id, self.reference_sale, value, self.currency,
+            sign = get_signature(settings.API_KEY, self.merchant_id, self.reference_sale, value, self.currency,
                                  self.state_pol)
 
             if self.sign != sign:
