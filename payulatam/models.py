@@ -5,8 +5,8 @@ from payu.enumerators import Country, Currency
 
 from payulatam.signals import valid_notification_received, invalid_notification_received
 
-COUNTRY = tuple(map(lambda x: (x.name, x.value), Country))
-CURRENCY = tuple(map(lambda x: (x.name, x.value), Currency))
+COUNTRY = tuple(map(lambda x: (x.value, x.name), Country))
+CURRENCY = tuple(map(lambda x: (x.value, x.name), Currency))
 
 
 class AbstractAdministrativeSegment(models.Model):
@@ -16,6 +16,9 @@ class AbstractAdministrativeSegment(models.Model):
     administrative_fee = models.DecimalField(max_digits=64, decimal_places=2, default=0)
     administrative_fee_tax = models.DecimalField(max_digits=64, decimal_places=2, default=0)
     administrative_fee_base = models.DecimalField(max_digits=64, decimal_places=2, default=0)
+
+    class Meta:
+        abstract = True
 
 
 class AbstractBankSegment(models.Model):
@@ -138,9 +141,13 @@ class AbstractFlagSegment(models.Model):
 class AbstractPaymentNotification(AbstractAdministrativeSegment,
                                   AbstractBankSegment,
                                   AbstractBillingSegment,
+                                  AbstractCreditCardSegment,
+                                  AbstractPolSegment,
                                   AbstractPSESegment,
                                   AbstractShippingSegment,
                                   AbstractTransactionSegment,
+                                  AbstractValueSegment,
+                                  AbstractFlagSegment,
                                   ):
     """
 
