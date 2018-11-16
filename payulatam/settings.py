@@ -4,11 +4,11 @@
     The 'settings.py' file might look like this:
 
     PAYU_LATAM = {
-        'API_LOGIN': 'pRRXKOl8ikMmt9u',
-        'API_KEY':  '4Vj8eK4rloUd272L48hsrarnUA',
-        'MERCHANT_ID': 508029,
+        'API_LOGIN': 'pRRXKOl8ikMmt9u', # This is the Payu test API LOGIN
+        'API_KEY':  '4Vj8eK4rloUd272L48hsrarnUA', # This is the Payu test API KEY
+        'MERCHANT_ID': 12345, # Please change this
         'ACCOUNT_ID_DICT': {
-            'CO': 512321
+            'CO': 54321 # Also change this.
         }
     }
 """
