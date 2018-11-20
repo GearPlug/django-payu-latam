@@ -1,11 +1,11 @@
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from payu.enumerators import Country, Currency
+from payu.enumerators import Country, Currency, MessagePol, StatePol
 
 from payulatam.settings import payulatam_settings as settings
-from payulatam.signals import valid_notification_received, invalid_notification_received, approved_transaction, \
-    declined_transaction, expired_transaction
+from payulatam.signals import invalid_notification_received, payment_was_approved, payment_was_declined, \
+    payment_was_expired, payment_was_flagged, valid_notification_received
 from payulatam.utils import get_signature
 
 COUNTRY = tuple(map(lambda x: (x.value, x.name), Country))
@@ -75,15 +75,15 @@ class AbstractPolSegment(models.Model):
 
     @property
     def is_state_approved(self):
-        return self.state_pol == '4'
+        return self.get_state() == StatePol.APPROVED
 
     @property
     def is_state_declined(self):
-        return self.state_pol == '6'
+        return self.get_state() == StatePol.DECLINED
 
     @property
     def is_state_expired(self):
-        return self.state_pol == '5'
+        return self.get_state() == StatePol.EXPIRED
 
     @property
     def is_approved(self):
@@ -93,7 +93,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'APPROVED'
+        return self.get_response_message() == MessagePol.APPROVED
 
     @property
     def is_payment_network_rejected(self):
@@ -103,7 +103,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'PAYMENT_NETWORK_REJECTED'
+        return self.get_response_message() == MessagePol.PAYMENT_NETWORK_REJECTED
 
     @property
     def is_entity_declined(self):
@@ -113,7 +113,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'ENTITY_DECLINED'
+        return self.get_response_message() == MessagePol.ENTITY_DECLINED
 
     @property
     def is_insufficient_funds(self):
@@ -123,7 +123,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'INSUFFICIENT_FUNDS'
+        return self.get_response_message() == MessagePol.INSUFFICIENT_FUNDS
 
     @property
     def is_invalid_card(self):
@@ -133,7 +133,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'INVALID_CARD'
+        return self.get_response_message() == MessagePol.INVALID_CARD
 
     @property
     def is_contact_the_entity(self):
@@ -143,7 +143,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'CONTACT_THE_ENTITY'
+        return self.get_response_message() == MessagePol.CONTACT_THE_ENTITY
 
     @property
     def is_bank_account_activation_error(self):
@@ -153,7 +153,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'BANK_ACCOUNT_ACTIVATION_ERROR'
+        return self.get_response_message() == MessagePol.BANK_ACCOUNT_ACTIVATION_ERROR
 
     @property
     def is_bank_account_not_authorized_for_automatic_debit(self):
@@ -163,7 +163,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'BANK_ACCOUNT_NOT_AUTHORIZED_FOR_AUTOMATIC_DEBIT'
+        return self.get_response_message() == MessagePol.BANK_ACCOUNT_NOT_AUTHORIZED_FOR_AUTOMATIC_DEBIT
 
     @property
     def is_invalid_agency_bank_account(self):
@@ -173,7 +173,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'INVALID_AGENCY_BANK_ACCOUNT'
+        return self.get_response_message() == MessagePol.INVALID_AGENCY_BANK_ACCOUNT
 
     @property
     def is_invalid_bank_account(self):
@@ -183,7 +183,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'INVALID_BANK_ACCOUNT'
+        return self.get_response_message() == MessagePol.INVALID_BANK_ACCOUNT
 
     @property
     def is_invalid_invalid_bank(self):
@@ -193,7 +193,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'INVALID_BANK'
+        return self.get_response_message() == MessagePol.INVALID_BANK
 
     @property
     def is_expired_card(self):
@@ -203,7 +203,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'EXPIRED_CARD'
+        return self.get_response_message() == MessagePol.EXPIRED_CARD
 
     @property
     def is_restricted_card(self):
@@ -213,7 +213,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'RESTRICTED_CARD'
+        return self.get_response_message() == MessagePol.RESTRICTED_CARD
 
     @property
     def is_invalid_expiration_date_or_security_code(self):
@@ -223,7 +223,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'INVALID_EXPIRATION_DATE_OR_SECURITY_CODE'
+        return self.get_response_message() == MessagePol.INVALID_EXPIRATION_DATE_OR_SECURITY_CODE
 
     @property
     def is_repeat_transaction(self):
@@ -233,7 +233,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'REPEAT_TRANSACTION'
+        return self.get_response_message() == MessagePol.REPEAT_TRANSACTION
 
     @property
     def is_invalid_transaction(self):
@@ -243,7 +243,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'INVALID_TRANSACTION'
+        return self.get_response_message() == MessagePol.INVALID_TRANSACTION
 
     @property
     def is_exceeded_amount(self):
@@ -253,7 +253,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'EXCEEDED_AMOUNT'
+        return self.get_response_message() == MessagePol.EXCEEDED_AMOUNT
 
     @property
     def is_abandoned_transaction(self):
@@ -263,7 +263,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'ABANDONED_TRANSACTION'
+        return self.get_response_message() == MessagePol.ABANDONED_TRANSACTION
 
     @property
     def is_credit_card_not_authorized_for_internet_transaction(self):
@@ -273,7 +273,7 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'CREDIT_CARD_NOT_AUTHORIZED_FOR_INTERNET_TRANSACTIONS'
+        return self.get_response_message() == MessagePol.CREDIT_CARD_NOT_AUTHORIZED_FOR_INTERNET_TRANSACTIONS
 
     @property
     def is_antifraud_rejected(self):
@@ -283,7 +283,187 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'ANTIFRAUD_REJECTED'
+        return self.get_response_message() == MessagePol.ANTIFRAUD_REJECTED
+
+    @property
+    def is_digital_certificate_not_found(self):
+        """
+        Digital certificate not found
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.DIGITAL_CERTIFICATE_NOT_FOUND
+
+    @property
+    def is_bank_unreachable(self):
+        """
+        Error trying to communicate with the bank
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.BANK_UNREACHABLE
+
+    @property
+    def is_payment_network_no_connection(self):
+        """
+        Unable to communicate with the financial institution
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.PAYMENT_NETWORK_NO_CONNECTION
+
+    @property
+    def is_payment_network_no_response(self):
+        """
+        No response was received from the financial institution
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.PAYMENT_NETWORK_NO_RESPONSE
+
+    @property
+    def is_entity_messaging_error(self):
+        """
+        Error communicating with the financial institution
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.ENTITY_MESSAGING_ERROR
+
+    @property
+    def is_not_accepted_transaction(self):
+        """
+        Transaction not permitted
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.NOT_ACCEPTED_TRANSACTION
+
+    @property
+    def is_internal_payment_provider_error(self):
+        """
+        Error
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.INTERNAL_PAYMENT_PROVIDER_ERROR
+
+    @property
+    def is_inactive_payment_provider(self):
+        """
+        Error
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.INACTIVE_PAYMENT_PROVIDER
+
+    @property
+    def is_error(self):
+        """
+        Error
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.ERROR
+
+    @property
+    def is_error_converting_transactions_amounts(self):
+        """
+        Error
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.ERROR_CONVERTING_TRANSACTION_AMOUNTS
+
+    @property
+    def is_fix_not_required(self):
+        """
+        Error
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.FIX_NOT_REQUIRED
+
+    @property
+    def is_automatically_fixed_and_success_reversal(self):
+        """
+        Error
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.AUTOMATICALLY_FIXED_AND_SUCCESS_REVERSAL
+
+    @property
+    def is_automatically_fixed_and_unsuccess_reversal(self):
+        """
+        Error
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.AUTOMATICALLY_FIXED_AND_UNSUCCESS_REVERSAL
+
+    @property
+    def is_automatic_fixed_not_supported(self):
+        """
+        Error
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.AUTOMATIC_FIXED_NOT_SUPPORTED
+
+    @property
+    def is_not_fixed_for_error_state(self):
+        """
+        Error
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.NOT_FIXED_FOR_ERROR_STATE
+
+    @property
+    def is_error_fixing_and_reversing(self):
+        """
+        Error
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.ERROR_FIXING_AND_REVERSING
+
+    @property
+    def is_error_fixing_incomplete_data(self):
+        """
+        Error
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.ERROR_FIXING_INCOMPLETE_DATA
+
+    @property
+    def is_payment_network_bad_response(self):
+        """
+        Error
+
+        Returns:
+
+        """
+        return self.get_response_message() == MessagePol.PAYMENT_NETWORK_BAD_RESPONSE
 
     @property
     def is_expired_transaction(self):
@@ -293,15 +473,19 @@ class AbstractPolSegment(models.Model):
         Returns:
 
         """
-        return self.response_message_pol == 'EXPIRED_TRANSACTION'
+        return self.get_response_message() == MessagePol.EXPIRED_TRANSACTION
 
     def get_state(self):
-        # TODO devolver enum
-        return self.state_pol
+        try:
+            return StatePol(self.state_pol)
+        except ValueError:
+            return self.state_pol
 
     def get_response_message(self):
-        # TODO devolver enum
-        return self.response_message_pol
+        try:
+            return MessagePol(self.response_message_pol)
+        except ValueError:
+            return self.response_message_pol
 
 
 class AbstractPSESegment(models.Model):
@@ -459,16 +643,18 @@ class PaymentNotification(AbstractPaymentNotification):
 def payment_notification_save(sender, instance, created, **kwargs):
     if created:
         if instance.is_flagged:
-            invalid_notification_received.send(sender=PaymentNotification)
+            invalid_notification_received.send(sender=PaymentNotification, instance=instance)
+            payment_was_flagged.send(sender=PaymentNotification, instance=instance)
+            return
         else:
-            valid_notification_received.send(sender=PaymentNotification)
+            valid_notification_received.send(sender=PaymentNotification, instance=instance)
 
         if instance.is_state_approved:
-            approved_transaction.send(sender=PaymentNotification)
+            payment_was_approved.send(sender=PaymentNotification, instance=instance)
         elif instance.is_state_declined:
-            declined_transaction.send(sender=PaymentNotification)
+            payment_was_declined.send(sender=PaymentNotification, instance=instance)
         elif instance.is_state_expired:
-            expired_transaction.send(sender=PaymentNotification)
+            payment_was_expired.send(sender=PaymentNotification, instance=instance)
         else:
             # TODO raise error
             pass

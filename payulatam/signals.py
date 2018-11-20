@@ -1,8 +1,9 @@
 import django.dispatch
 
-valid_notification_received = django.dispatch.Signal()
-invalid_notification_received = django.dispatch.Signal()
+valid_notification_received = django.dispatch.Signal(providing_args=['instance'])
+invalid_notification_received = django.dispatch.Signal(providing_args=['instance'])
 
-approved_transaction = django.dispatch.Signal()
-declined_transaction = django.dispatch.Signal()
-expired_transaction = django.dispatch.Signal()
+payment_was_approved = django.dispatch.Signal(providing_args=['instance'])
+payment_was_declined = django.dispatch.Signal(providing_args=['instance'])
+payment_was_expired = django.dispatch.Signal(providing_args=['instance'])
+payment_was_flagged = django.dispatch.Signal(providing_args=['instance'])
