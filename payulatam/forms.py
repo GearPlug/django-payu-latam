@@ -1,7 +1,10 @@
 from django import forms
+from payu.enumerators import Country
 
 from payulatam.fields import PayuDateTimeField
 from payulatam.models import PaymentNotification
+
+COUNTRY = tuple(map(lambda x: (x.value, x.name), Country))
 
 
 class PaymentNotificationForm(forms.ModelForm):
@@ -31,6 +34,13 @@ class PaymentNotificationForm(forms.ModelForm):
     transaction_bank_id = forms.CharField(max_length=255, required=False)
     cus = forms.CharField(max_length=64, required=False)
     authorization_code = forms.CharField(max_length=12, required=False)
+
+    billing_address = forms.CharField(widget=forms.Textarea, required=False)
+    billing_city = forms.CharField(max_length=255, required=False)
+    billing_country = forms.ChoiceField(choices=COUNTRY, required=False)
+    phone = forms.CharField(max_length=20, required=False)
+    customer_number = forms.IntegerField(required=False)
+    ip = forms.CharField(max_length=39, required=False)
 
     class Meta:
         model = PaymentNotification

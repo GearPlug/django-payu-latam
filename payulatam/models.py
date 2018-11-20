@@ -594,7 +594,7 @@ class PaymentNotification(AbstractPaymentNotification):
 
     merchant_id = models.IntegerField()
 
-    customer_number = models.IntegerField()
+    customer_number = models.IntegerField(blank=True, null=True)
 
     nickname_seller = models.CharField(max_length=150)
     nickname_buyer = models.CharField(max_length=150)
