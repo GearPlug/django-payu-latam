@@ -1,9 +1,11 @@
-from payulatam.settings import payulatam_settings as settings
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from payu.enumerators import Country, Currency
-from payulatam.signals import valid_notification_received, invalid_notification_received
+
+from payulatam.settings import payulatam_settings as settings
+from payulatam.signals import valid_notification_received, invalid_notification_received, approved_transaction, \
+    declined_transaction, expired_transaction
 from payulatam.utils import get_signature
 
 COUNTRY = tuple(map(lambda x: (x.value, x.name), Country))
@@ -70,6 +72,236 @@ class AbstractPolSegment(models.Model):
 
     class Meta:
         abstract = True
+
+    @property
+    def is_state_approved(self):
+        return self.state_pol == '4'
+
+    @property
+    def is_state_declined(self):
+        return self.state_pol == '6'
+
+    @property
+    def is_state_expired(self):
+        return self.state_pol == '5'
+
+    @property
+    def is_approved(self):
+        """
+        Transaction approved
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'APPROVED'
+
+    @property
+    def is_payment_network_rejected(self):
+        """
+        Transaction rejected by financial institution
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'PAYMENT_NETWORK_REJECTED'
+
+    @property
+    def is_entity_declined(self):
+        """
+        Transaction rejected by the bank
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'ENTITY_DECLINED'
+
+    @property
+    def is_insufficient_funds(self):
+        """
+        Insufficient funds
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'INSUFFICIENT_FUNDS'
+
+    @property
+    def is_invalid_card(self):
+        """
+        Invalid card
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'INVALID_CARD'
+
+    @property
+    def is_contact_the_entity(self):
+        """
+        Contact the financial institution
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'CONTACT_THE_ENTITY'
+
+    @property
+    def is_bank_account_activation_error(self):
+        """
+        Automatic debit is not allowed
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'BANK_ACCOUNT_ACTIVATION_ERROR'
+
+    @property
+    def is_bank_account_not_authorized_for_automatic_debit(self):
+        """
+        Automatic debit is not allowed
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'BANK_ACCOUNT_NOT_AUTHORIZED_FOR_AUTOMATIC_DEBIT'
+
+    @property
+    def is_invalid_agency_bank_account(self):
+        """
+        Automatic debit is not allowed
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'INVALID_AGENCY_BANK_ACCOUNT'
+
+    @property
+    def is_invalid_bank_account(self):
+        """
+        Automatic debit is not allowed
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'INVALID_BANK_ACCOUNT'
+
+    @property
+    def is_invalid_invalid_bank(self):
+        """
+        Automatic debit is not allowed
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'INVALID_BANK'
+
+    @property
+    def is_expired_card(self):
+        """
+        Expired card
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'EXPIRED_CARD'
+
+    @property
+    def is_restricted_card(self):
+        """
+        Restricted card
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'RESTRICTED_CARD'
+
+    @property
+    def is_invalid_expiration_date_or_security_code(self):
+        """
+        Invalid expiration date or security code
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'INVALID_EXPIRATION_DATE_OR_SECURITY_CODE'
+
+    @property
+    def is_repeat_transaction(self):
+        """
+        Retry payment
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'REPEAT_TRANSACTION'
+
+    @property
+    def is_invalid_transaction(self):
+        """
+        Invalid transaction
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'INVALID_TRANSACTION'
+
+    @property
+    def is_exceeded_amount(self):
+        """
+        The value exceeds the maximum allowed by the entity
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'EXCEEDED_AMOUNT'
+
+    @property
+    def is_abandoned_transaction(self):
+        """
+        Transaction abandoned by the payer
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'ABANDONED_TRANSACTION'
+
+    @property
+    def is_credit_card_not_authorized_for_internet_transaction(self):
+        """
+        Card not authorized to buy online
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'CREDIT_CARD_NOT_AUTHORIZED_FOR_INTERNET_TRANSACTIONS'
+
+    @property
+    def is_antifraud_rejected(self):
+        """
+        Transaction refused because of suspected fraud
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'ANTIFRAUD_REJECTED'
+
+    @property
+    def is_expired_transaction(self):
+        """
+        Expired transaction
+
+        Returns:
+
+        """
+        return self.response_message_pol == 'EXPIRED_TRANSACTION'
+
+    def get_state(self):
+        # TODO devolver enum
+        return self.state_pol
+
+    def get_response_message(self):
+        # TODO devolver enum
+        return self.response_message_pol
 
 
 class AbstractPSESegment(models.Model):
@@ -230,3 +462,13 @@ def payment_notification_save(sender, instance, created, **kwargs):
             invalid_notification_received.send(sender=PaymentNotification)
         else:
             valid_notification_received.send(sender=PaymentNotification)
+
+        if instance.is_state_approved:
+            approved_transaction.send(sender=PaymentNotification)
+        elif instance.is_state_declined:
+            declined_transaction.send(sender=PaymentNotification)
+        elif instance.is_state_expired:
+            expired_transaction.send(sender=PaymentNotification)
+        else:
+            # TODO raise error
+            pass
