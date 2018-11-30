@@ -1,3 +1,5 @@
+import json
+
 from django.http.response import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -32,6 +34,8 @@ class PaymentNotificationView(View):
     def post(self, request):
         form = self.form_class(request.POST)
         if form.is_valid():
-            form.save()
+            payment_notification = form.save(commit=False)
+            payment_notification.raw = json.dumps(request.POST)
+            payment_notification.save()
             return HttpResponse(status=200)
         return HttpResponse(status=400)

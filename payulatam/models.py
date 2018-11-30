@@ -1,21 +1,17 @@
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from payu.enumerators import Country, Currency, MessagePol, StatePol
+from payu.enumerators import Currency, MessagePol, StatePol
 
 from payulatam.settings import payulatam_settings as settings
 from payulatam.signals import invalid_notification_received, payment_was_approved, payment_was_declined, \
     payment_was_expired, payment_was_flagged, valid_notification_received
 from payulatam.utils import get_signature
 
-COUNTRY = tuple(map(lambda x: (x.value, x.name), Country))
-CURRENCY = tuple(map(lambda x: (x.value, x.name), Currency))
+CURRENCY = tuple(map(lambda x: (x.value, x.value), Currency))
 
 
 class AbstractAdministrativeSegment(models.Model):
-    """
-
-    """
     administrative_fee = models.DecimalField(max_digits=64, decimal_places=2, default=0)
     administrative_fee_tax = models.DecimalField(max_digits=64, decimal_places=2, default=0)
     administrative_fee_base = models.DecimalField(max_digits=64, decimal_places=2, default=0)
@@ -25,9 +21,6 @@ class AbstractAdministrativeSegment(models.Model):
 
 
 class AbstractBankSegment(models.Model):
-    """
-
-    """
     bank_id = models.CharField(max_length=255)
     bank_referenced_name = models.CharField(max_length=100)
     error_code_bank = models.CharField(max_length=255)
@@ -38,21 +31,15 @@ class AbstractBankSegment(models.Model):
 
 
 class AbstractBillingSegment(models.Model):
-    """
-
-    """
     billing_address = models.TextField()
     billing_city = models.CharField(max_length=255)
-    billing_country = models.CharField(max_length=2, choices=COUNTRY)
+    billing_country = models.CharField(max_length=2)
 
     class Meta:
         abstract = True
 
 
 class AbstractCreditCardSegment(models.Model):
-    """
-
-    """
     cc_number = models.CharField(max_length=100)
     cc_holder = models.CharField(max_length=100)
     franchise = models.CharField(max_length=100)
@@ -481,6 +468,10 @@ class AbstractPolSegment(models.Model):
         except ValueError:
             return self.state_pol
 
+    def get_state_name(self):
+        state = self.get_state()
+        return state.name if isinstance(state, StatePol) else state
+
     def get_response_message(self):
         try:
             return MessagePol(self.response_message_pol)
@@ -489,6 +480,7 @@ class AbstractPolSegment(models.Model):
 
 
 class AbstractPSESegment(models.Model):
+    cus = models.CharField(max_length=64)
     pse_bank = models.CharField(max_length=255)
     pse_reference1 = models.CharField(max_length=255)
     pse_reference3 = models.CharField(max_length=255)
@@ -499,21 +491,15 @@ class AbstractPSESegment(models.Model):
 
 
 class AbstractShippingSegment(models.Model):
-    """
-
-    """
-    shipping_address = models.CharField(max_length=50)
-    shipping_city = models.CharField(max_length=50)
-    shipping_country = models.CharField(max_length=2, choices=COUNTRY)
+    shipping_address = models.TextField()
+    shipping_city = models.CharField(max_length=255)
+    shipping_country = models.CharField(max_length=2)
 
     class Meta:
         abstract = True
 
 
 class AbstractTransactionSegment(models.Model):
-    """
-
-    """
     transaction_id = models.CharField(max_length=36, db_index=True)
     transaction_date = models.DateTimeField()
     transaction_bank_id = models.CharField(max_length=255)
@@ -526,9 +512,6 @@ class AbstractTransactionSegment(models.Model):
 
 
 class AbstractValueSegment(models.Model):
-    """
-
-    """
     value = models.DecimalField(max_digits=64, decimal_places=2, default=0)
     additional_value = models.DecimalField(max_digits=64, decimal_places=2, default=0)
     tax = models.DecimalField(max_digits=64, decimal_places=2, default=0)
@@ -540,7 +523,15 @@ class AbstractValueSegment(models.Model):
 
 
 class AbstractFlagSegment(models.Model):
+    DUPLICATE_TRANSACTION = '1001'
+    INVALID_SIGN = '1002'
+    FLAG_CODES = (
+        (DUPLICATE_TRANSACTION, 'Duplicate Transaction'),
+        (INVALID_SIGN, 'Invalid Sign'),
+    )
     flag = models.BooleanField(default=False)
+    flag_code = models.CharField(max_length=4, choices=FLAG_CODES)
+    flag_info = models.CharField(max_length=100)
 
     class Meta:
         abstract = True
@@ -553,6 +544,8 @@ class AbstractFlagSegment(models.Model):
         exists = PaymentNotification.objects.filter(transaction_id=self.transaction_id).exists()
         if not self.id and exists:
             self.flag = True
+            self.flag_code = self.DUPLICATE_TRANSACTION
+            self.flag_info = 'Duplicate transaction_id. ({})'.format(self.transaction_id)
         super().save(*args, **kwargs)
 
 
@@ -567,16 +560,11 @@ class AbstractPaymentNotification(AbstractAdministrativeSegment,
                                   AbstractValueSegment,
                                   AbstractFlagSegment,
                                   ):
-    """
-
-    """
     payment_method = models.IntegerField()
     payment_method_id = models.IntegerField()
     payment_method_type = models.IntegerField()
     payment_method_name = models.CharField(max_length=255)
     payment_request_state = models.CharField(max_length=32)
-
-    description = models.TextField()
 
     class Meta:
         abstract = True
@@ -584,6 +572,7 @@ class AbstractPaymentNotification(AbstractAdministrativeSegment,
 
 class PaymentNotification(AbstractPaymentNotification):
     reference_sale = models.CharField(max_length=255)
+    description = models.TextField()
 
     risk = models.DecimalField(max_digits=64, decimal_places=2, default=0, blank=True, null=True)
     sign = models.CharField(max_length=255)
@@ -601,7 +590,6 @@ class PaymentNotification(AbstractPaymentNotification):
 
     antifraud_merchant_id = models.CharField(max_length=100)
     airline_code = models.CharField(max_length=4)
-    cus = models.CharField(max_length=64)
     authorization_code = models.CharField(max_length=12)
 
     extra1 = models.CharField(max_length=255)
@@ -613,6 +601,8 @@ class PaymentNotification(AbstractPaymentNotification):
 
     date = models.DateTimeField()
     test = models.BooleanField()
+
+    raw = models.TextField()
 
     date_modified = models.DateTimeField(auto_now=True)
     date_created = models.DateTimeField(auto_now_add=True)
@@ -636,6 +626,8 @@ class PaymentNotification(AbstractPaymentNotification):
 
             if self.sign != sign:
                 self.flag = True
+                self.flag_code = AbstractFlagSegment.INVALID_SIGN
+                self.flag_info = 'Invalid sign. ({})'.format(self.sign)
         super().save(*args, **kwargs)
 
 

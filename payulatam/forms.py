@@ -1,16 +1,13 @@
 from django import forms
-from payu.enumerators import Country
 
 from payulatam.fields import PayuDateTimeField
 from payulatam.models import PaymentNotification
 
-COUNTRY = tuple(map(lambda x: (x.value, x.name), Country))
-
 
 class PaymentNotificationForm(forms.ModelForm):
     commision_pol_currency = forms.CharField(max_length=3, required=False)
-    shipping_address = forms.CharField(max_length=50, required=False)
-    shipping_city = forms.CharField(max_length=50, required=False)
+    shipping_address = forms.CharField(widget=forms.Textarea, required=False)
+    shipping_city = forms.CharField(max_length=255, required=False)
     shipping_country = forms.CharField(max_length=2, required=False)
     office_phone = forms.CharField(max_length=20, required=False)
     nickname_seller = forms.CharField(max_length=150, required=False)
@@ -37,10 +34,14 @@ class PaymentNotificationForm(forms.ModelForm):
 
     billing_address = forms.CharField(widget=forms.Textarea, required=False)
     billing_city = forms.CharField(max_length=255, required=False)
-    billing_country = forms.ChoiceField(choices=COUNTRY, required=False)
+    billing_country = forms.CharField(max_length=2, required=False)
     phone = forms.CharField(max_length=20, required=False)
     customer_number = forms.IntegerField(required=False)
     ip = forms.CharField(max_length=39, required=False)
+
+    flag_code = forms.CharField(max_length=4, required=False)
+    flag_info = forms.CharField(max_length=100, required=False)
+    raw = forms.CharField(widget=forms.Textarea, required=False)
 
     class Meta:
         model = PaymentNotification

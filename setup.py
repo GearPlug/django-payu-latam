@@ -8,7 +8,7 @@ def read(fname):
 
 
 setup(name='django-payu-latam',
-      version='0.1.2',
+      version='0.1.3',
       include_package_data=True,
       license='MIT',
       description='A django integration for PayU Latam.',

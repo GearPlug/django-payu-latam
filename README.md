@@ -10,7 +10,6 @@ Supported countries:
 * Mexico
 * Panama
 * Peru
-* Chile
 
 ## Installing
 ```
