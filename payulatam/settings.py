@@ -22,6 +22,8 @@ DEFAULTS = {
     'API_KEY': None,
     'MERCHANT_ID': None,
     'ACCOUNT_ID': None,
+    'WEBCHECKOUT_URL': 'https://checkout.payulatam.com/ppp-web-gateway-payu/',
+    'PAYMENT_BUTTON_IMAGE_URL': 'https://www.payulatam.com/co/wp-content/uploads/sites/2/2017/02/payu@2x.png',
 }
 
 # List of settings that cannot be empty
