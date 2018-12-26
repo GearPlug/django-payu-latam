@@ -1,7 +1,9 @@
 from django import forms
+from django.utils.html import format_html
 
 from payulatam.fields import PayuDateTimeField
 from payulatam.models import PaymentNotification
+from payulatam.settings import payulatam_settings
 
 
 class PaymentNotificationForm(forms.ModelForm):
@@ -46,3 +48,33 @@ class PaymentNotificationForm(forms.ModelForm):
     class Meta:
         model = PaymentNotification
         fields = '__all__'
+
+
+class WebcheckoutPaymentForm(forms.Form):
+    merchantId = forms.CharField(initial=payulatam_settings.MERCHANT_ID, max_length=100, widget=forms.HiddenInput)
+    accountId = forms.CharField(initial=payulatam_settings.ACCOUNT_ID, max_length=100, widget=forms.HiddenInput)
+    description = forms.CharField(max_length=100, widget=forms.HiddenInput)
+    referenceCode = forms.CharField(max_length=100, widget=forms.HiddenInput)
+    amount = forms.CharField(max_length=100, widget=forms.HiddenInput)
+    tax = forms.CharField(max_length=100, widget=forms.HiddenInput)
+    taxReturnBase = forms.CharField(max_length=100, widget=forms.HiddenInput)
+    currency = forms.CharField(max_length=100, widget=forms.HiddenInput)
+    signature = forms.CharField(max_length=100, widget=forms.HiddenInput)
+    test = forms.CharField(initial=1, max_length=1, widget=forms.HiddenInput)
+    buyerFullName = forms.CharField(max_length=200, widget=forms.HiddenInput)
+    buyerEmail = forms.CharField(max_length=100, widget=forms.HiddenInput)
+    telephone = forms.CharField(max_length=100, widget=forms.HiddenInput)
+    responseUrl = forms.CharField(max_length=100, widget=forms.HiddenInput)
+    confirmationUrl = forms.CharField(max_length=100, widget=forms.HiddenInput)
+
+    def render(self):
+        return format_html(u"""<form action="{0}" method="post">
+            {1}
+            <input type="image" src="{2}" border="0" name="submit" alt="Buy it Now" />
+        </form>""", self.get_web_checkout_endpoint(), self.as_p(), self.get_image())
+
+    def get_web_checkout_endpoint(self):
+        return payulatam_settings.WEBCHECKOUT_URL
+
+    def get_image(self):
+        return payulatam_settings.PAYMENT_BUTTON_IMAGE_URL
