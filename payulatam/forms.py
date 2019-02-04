@@ -45,6 +45,8 @@ class PaymentNotificationForm(forms.ModelForm):
     flag_info = forms.CharField(max_length=100, required=False)
     raw = forms.CharField(widget=forms.Textarea, required=False)
 
+    test = forms.BooleanField(required=False)
+
     class Meta:
         model = PaymentNotification
         fields = '__all__'

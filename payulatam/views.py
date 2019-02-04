@@ -32,7 +32,9 @@ class PaymentNotificationView(View):
     form_class = PaymentNotificationForm
 
     def post(self, request):
-        form = self.form_class(request.POST)
+        post = request.POST.copy()
+        post['test'] = bool(int(post['test']))
+        form = self.form_class(post)
         if form.is_valid():
             payment_notification = form.save(commit=False)
             payment_notification.raw = json.dumps(request.POST)
