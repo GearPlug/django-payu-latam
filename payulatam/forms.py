@@ -45,6 +45,8 @@ class PaymentNotificationForm(forms.ModelForm):
     flag_info = forms.CharField(max_length=100, required=False)
     raw = forms.CharField(widget=forms.Textarea, required=False)
 
+    test = forms.BooleanField(required=False)
+
     cc_number = forms.CharField(max_length=100, required=False)
     cc_holder = forms.CharField(max_length=100, required=False)
     franchise = forms.CharField(max_length=100, required=False)
