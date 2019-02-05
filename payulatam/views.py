@@ -34,6 +34,7 @@ class PaymentNotificationView(View):
     def post(self, request):
         post = request.POST.copy()
         post['test'] = bool(int(post['test']))
+        post['installments_number'] = post['installments_number'] if post['installments_number'] else 0
         form = self.form_class(post)
         if form.is_valid():
             payment_notification = form.save(commit=False)
