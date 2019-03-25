@@ -7,9 +7,7 @@
         'API_LOGIN': 'pRRXKOl8ikMmt9u', # This is the Payu test API LOGIN
         'API_KEY':  '4Vj8eK4rloUd272L48hsrarnUA', # This is the Payu test API KEY
         'MERCHANT_ID': 12345, # Please change this
-        'ACCOUNT_ID_DICT': {
-            'CO': 54321 # Also change this.
-        }
+        'ACCOUNT_ID': 12345, # Also change this.
     }
 """
 from django.conf import settings
